@@ -34,7 +34,7 @@ export default function FilterBar({
           {/* Icon */}
           <div className="flex items-center gap-2 text-slate-500 text-sm font-medium mr-1">
             <SlidersHorizontal className="w-4 h-4" />
-            <span className="hidden sm:inline">Filters</span>
+            <span className="hidden sm:inline">Bộ lọc</span>
           </div>
 
           {/* Divider */}
@@ -52,10 +52,8 @@ export default function FilterBar({
                   id={`filter-noise-${level}`}
                   onClick={() => onNoiseChange(active ? null : level)}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
-                    active
-                      ? config.color + " border-current"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300"
+                    "border-slate-200 hover:border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium border rounded-full transition-all text-slate-600",
+                    active && config.color + " border-current"
                   )}
                 >
                   {config.label}
@@ -79,10 +77,8 @@ export default function FilterBar({
                   id={`filter-purpose-${purpose}`}
                   onClick={() => onPurposeChange(active ? null : purpose)}
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
-                    active
-                      ? "bg-indigo-100 text-indigo-700 border-indigo-200"
-                      : "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300"
+                    "border-slate-200 hover:border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium border rounded-full transition-all text-slate-600",
+                    active && "bg-indigo-100 text-indigo-700 border-indigo-200"
                   )}
                 >
                   {config.icon} {config.label}
@@ -112,13 +108,12 @@ export default function FilterBar({
               )}
             />
             <Clock className="w-3 h-3" />
-            Available now
+            Đang còn chỗ
           </button>
 
           {/* Result count */}
           <div className="ml-auto text-xs text-slate-400">
-            <span className="font-semibold text-slate-600">{resultCount}</span>{" "}
-            spaces found
+            Tìm thấy <span className="font-semibold text-slate-600">{resultCount}</span> không gian
           </div>
         </div>
       </div>

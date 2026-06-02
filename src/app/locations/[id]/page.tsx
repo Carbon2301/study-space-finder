@@ -11,13 +11,13 @@ import {
   Clock,
   ChevronRight,
 } from "lucide-react";
-import { getLocationById } from "@/lib/mock-data";
 import { noiseLevelConfig, purposeConfig, amenityIcons } from "@/lib/utils";
 import ImageGallery from "@/components/location/ImageGallery";
 import LiveStatus from "@/components/location/LiveStatus";
 import ReviewsList from "@/components/location/ReviewsList";
 import ReservationModal from "@/components/reservation/ReservationModal";
 import { use } from "react";
+import { Location } from "@/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -25,15 +25,29 @@ interface PageProps {
 
 export default function LocationDetailPage({ params }: PageProps) {
   const { id } = use(params);
+  const [location, setLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchLocation = async () => {
+      try {
+        const res = await fetch(`/api/locations/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLocation(data);
+        } else if (res.status === 404) {
+          notFound();
+        }
+      } catch (err) {
+        console.error("Failed to fetch location detail:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLocation();
+  }, [id]);
 
-  const location = getLocationById(id);
   if (!location && !loading) notFound();
 
   if (loading) {
@@ -66,7 +80,7 @@ export default function LocationDetailPage({ params }: PageProps) {
             className="flex items-center gap-1 hover:text-violet-600 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Explore
+            Quay lại trang Khám phá
           </Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-slate-600 font-medium">{location.name}</span>
@@ -95,7 +109,7 @@ export default function LocationDetailPage({ params }: PageProps) {
                       <MapPin className="w-4 h-4 text-slate-400" />
                       <span>{location.address}</span>
                       <span className="text-slate-300">·</span>
-                      <span>{location.distance} away</span>
+                      <span>Cách đây {location.distance}</span>
                     </div>
                   </div>
 
@@ -106,13 +120,13 @@ export default function LocationDetailPage({ params }: PageProps) {
                         {overallRating}
                       </span>
                       <span className="text-amber-600/70 text-xs">
-                        ({location.reviewCount} reviews)
+                        ({location.reviewCount} đánh giá)
                       </span>
                     </div>
                     <span
                       className={`px-3 py-2 rounded-xl text-sm font-semibold border ${noiseConfig.color}`}
                     >
-                      {noiseConfig.label} Noise
+                      Độ ồn: {noiseConfig.label}
                     </span>
                   </div>
                 </div>
@@ -133,7 +147,7 @@ export default function LocationDetailPage({ params }: PageProps) {
               {/* Description */}
               <div>
                 <h2 className="text-lg font-semibold text-slate-800 mb-2">
-                  About this space
+                  Về không gian này
                 </h2>
                 <p className="text-slate-600 leading-relaxed">
                   {location.description}
@@ -143,7 +157,7 @@ export default function LocationDetailPage({ params }: PageProps) {
               {/* Purposes */}
               <div>
                 <h2 className="text-lg font-semibold text-slate-800 mb-3">
-                  Best for
+                  Phù hợp nhất cho
                 </h2>
                 <div className="flex flex-wrap gap-2">
                   {location.purposes.map((p) => {
@@ -163,7 +177,7 @@ export default function LocationDetailPage({ params }: PageProps) {
               {/* Amenities */}
               <div>
                 <h2 className="text-lg font-semibold text-slate-800 mb-3">
-                  Amenities
+                  Tiện ích
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {location.amenities.map((amenity) => (
@@ -183,7 +197,7 @@ export default function LocationDetailPage({ params }: PageProps) {
               {/* Opening Hours */}
               <div>
                 <h2 className="text-lg font-semibold text-slate-800 mb-3">
-                  Opening Hours
+                  Giờ mở cửa
                 </h2>
                 <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
                   {location.openingHours.map((hours, i) => (
@@ -197,13 +211,13 @@ export default function LocationDetailPage({ params }: PageProps) {
                       </div>
                       <span
                         className={`text-sm font-medium ${
-                          hours.open === "Closed"
+                          hours.open === "Đóng cửa"
                             ? "text-red-500"
                             : "text-slate-700"
                         }`}
                       >
-                        {hours.open === "Closed"
-                          ? "Closed"
+                        {hours.open === "Đóng cửa"
+                          ? "Đóng cửa"
                           : hours.open && hours.close
                           ? `${hours.open} – ${hours.close}`
                           : hours.open || ""}
@@ -217,11 +231,10 @@ export default function LocationDetailPage({ params }: PageProps) {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-slate-800">
-                    Reviews
+                    Đánh giá
                   </h2>
                   <span className="text-sm text-slate-400">
-                    {location.reviews.length} review
-                    {location.reviews.length !== 1 ? "s" : ""}
+                    {location.reviews.length} đánh giá
                   </span>
                 </div>
                 <ReviewsList reviews={location.reviews} />
@@ -241,15 +254,15 @@ export default function LocationDetailPage({ params }: PageProps) {
                 <div className="bg-white rounded-2xl border border-slate-100 p-5">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-sm text-slate-500">Cost</p>
+                      <p className="text-sm text-slate-500">Chi phí</p>
                       <p className="text-2xl font-bold text-slate-900">
-                        {location.priceRange === "Free"
-                          ? "Free"
+                        {location.priceRange === "Miễn phí"
+                          ? "Miễn phí"
                           : location.priceRange}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-slate-500">Distance</p>
+                      <p className="text-sm text-slate-500">Khoảng cách</p>
                       <p className="font-semibold text-slate-700">
                         {location.distance}
                       </p>
@@ -263,12 +276,12 @@ export default function LocationDetailPage({ params }: PageProps) {
                     className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:opacity-90 transition-all hover:shadow-lg hover:shadow-violet-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
                   >
                     {location.availableSeats === 0
-                      ? "No Seats Available"
-                      : "Reserve a Seat"}
+                      ? "Hết chỗ trống"
+                      : "Đặt chỗ ngay"}
                   </button>
 
                   <p className="text-xs text-center text-slate-400 mt-2">
-                    Free cancellation anytime
+                    Hủy đặt chỗ miễn phí bất kỳ lúc nào
                   </p>
                 </div>
               </div>

@@ -37,7 +37,7 @@ export default function ReservationItem({
       setCountdown(remaining);
       if (remaining === "Expired") {
         expireReservation(reservation.id);
-        toast.warning(`Reservation at ${reservation.locationName} has expired.`);
+        toast.warning(`Đơn đặt chỗ tại ${reservation.locationName} đã hết hạn.`);
       }
     };
 
@@ -48,22 +48,22 @@ export default function ReservationItem({
 
   const handleCancel = () => {
     cancelReservation(reservation.id);
-    toast.success("Reservation cancelled successfully.");
+    toast.success("Hủy đặt chỗ thành công.");
   };
 
   const statusConfig = {
     active: {
-      label: "Active",
+      label: "Đang hoạt động",
       icon: <CheckCircle className="w-3.5 h-3.5" />,
       color: "text-green-700 bg-green-100 border-green-200",
     },
     expired: {
-      label: "Expired",
+      label: "Đã hết hạn",
       icon: <AlertCircle className="w-3.5 h-3.5" />,
       color: "text-slate-500 bg-slate-100 border-slate-200",
     },
     cancelled: {
-      label: "Cancelled",
+      label: "Đã hủy",
       icon: <XCircle className="w-3.5 h-3.5" />,
       color: "text-red-600 bg-red-50 border-red-200",
     },
@@ -108,7 +108,7 @@ export default function ReservationItem({
               <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
                 <MapPin className="w-3 h-3" />
                 <span>
-                  {reservation.seats} seat{reservation.seats > 1 ? "s" : ""} ·{" "}
+                  {reservation.seats} chỗ ·{" "}
                   {purpose.icon} {purpose.label}
                 </span>
               </div>
@@ -144,7 +144,7 @@ export default function ReservationItem({
               <Timer className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
               <div>
                 <p className="text-xs text-amber-700 font-medium">
-                  Hold expires in
+                  Thời gian giữ chỗ còn
                 </p>
                 <p className="font-mono text-sm font-bold text-amber-600">
                   {countdown || "15:00"}
@@ -161,7 +161,7 @@ export default function ReservationItem({
               className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
             >
               <XCircle className="w-3.5 h-3.5" />
-              Cancel reservation
+              Hủy đặt chỗ
             </button>
           )}
         </div>

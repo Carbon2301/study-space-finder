@@ -17,10 +17,10 @@ export default function LiveStatus({
 
   const status =
     availableSeats === 0
-      ? { label: "Full", color: "text-red-600", bg: "bg-red-50", pulse: "bg-red-500" }
+      ? { label: "Hết chỗ", color: "text-red-600", bg: "bg-red-50", pulse: "bg-red-500" }
       : availableSeats <= 3
-      ? { label: "Almost Full", color: "text-amber-600", bg: "bg-amber-50", pulse: "bg-amber-500" }
-      : { label: "Available", color: "text-green-600", bg: "bg-green-50", pulse: "bg-green-500" };
+      ? { label: "Sắp hết chỗ", color: "text-amber-600", bg: "bg-amber-50", pulse: "bg-amber-500" }
+      : { label: "Còn chỗ", color: "text-green-600", bg: "bg-green-50", pulse: "bg-green-500" };
 
   return (
     <div className={cn("rounded-2xl p-5 border", status.bg, "border-current/10")}>
@@ -45,10 +45,10 @@ export default function LiveStatus({
             />
           </span>
           <span className={cn("font-semibold text-sm", status.color)}>
-            Live — {status.label}
+            Trực tiếp — {status.label}
           </span>
         </div>
-        <span className="text-xs text-slate-400">Updated just now</span>
+        <span className="text-xs text-slate-400">Vừa cập nhật</span>
       </div>
 
       <div className="flex items-end gap-3">
@@ -57,7 +57,7 @@ export default function LiveStatus({
             {availableSeats}
           </span>
           <span className="text-slate-500 text-sm ml-1">
-            / {totalSeats} seats available
+            / {totalSeats} chỗ trống khả dụng
           </span>
         </div>
         <Users className={cn("w-5 h-5 mb-1", status.color)} />
@@ -81,9 +81,9 @@ export default function LiveStatus({
           />
         </div>
         <div className="flex justify-between mt-1 text-xs text-slate-400">
-          <span>Empty</span>
-          <span>{pct}% occupied</span>
-          <span>Full</span>
+          <span>Trống</span>
+          <span>Đã sử dụng {pct}%</span>
+          <span>Đầy</span>
         </div>
       </div>
     </div>

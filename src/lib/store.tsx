@@ -20,57 +20,107 @@ interface ReservationStore {
 const ReservationContext = createContext<ReservationStore | null>(null);
 
 const STORAGE_KEY = "study-space-reservations";
+const USER_ID_KEY = "study-space-user-id";
 
 export function ReservationProvider({ children }: { children: ReactNode }) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [userId, setUserId] = useState<string>("");
 
-  // Load from localStorage on mount
+  // Load userId and fetch reservations on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed: Reservation[] = JSON.parse(stored);
-        // Auto-expire old ones
-        const now = new Date().getTime();
-        const updated = parsed.map((r) => {
-          if (r.status === "active" && new Date(r.expiresAt).getTime() < now) {
-            return { ...r, status: "expired" as const };
-          }
-          return r;
-        });
-        setReservations(updated);
-      }
-    } catch {
-      // ignore parse errors
+    let localUserId = localStorage.getItem(USER_ID_KEY);
+    if (!localUserId) {
+      localUserId = generateId();
+      localStorage.setItem(USER_ID_KEY, localUserId);
     }
+    setUserId(localUserId);
+
+    const fetchReservations = async () => {
+      try {
+        const res = await fetch(`/api/reservations?userId=${localUserId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setReservations(data);
+        }
+      } catch (err) {
+        console.error("Failed to load reservations:", err);
+      }
+    };
+
+    fetchReservations();
   }, []);
 
-  // Persist to localStorage whenever reservations change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reservations));
-  }, [reservations]);
-
   const addReservation = (reservation: Omit<Reservation, "id">): string => {
-    const id = generateId();
-    const newReservation: Reservation = { ...reservation, id };
-    setReservations((prev) => [newReservation, ...prev]);
-    return id;
+    const tempId = generateId();
+    
+    const performPost = async () => {
+      try {
+        const res = await fetch("/api/reservations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...reservation,
+            userId,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Replace state with the saved DB record
+          setReservations((prev) =>
+            prev.map((r) => (r.id === tempId ? data : r))
+          );
+        }
+      } catch (err) {
+        console.error("Failed to save reservation:", err);
+      }
+    };
+
+    // Add tentatively with tempId to keep UI snappy
+    const tempReservation: Reservation = {
+      ...reservation,
+      id: tempId,
+    };
+    setReservations((prev) => [tempReservation, ...prev]);
+
+    performPost();
+
+    return tempId;
   };
 
   const cancelReservation = (id: string) => {
+    // Optimistic update
     setReservations((prev) =>
       prev.map((r) =>
         r.id === id ? { ...r, status: "cancelled" as const } : r
       )
     );
+
+    fetch(`/api/reservations/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: "cancelled" }),
+    }).catch((err) => console.error("Failed to cancel reservation:", err));
   };
 
   const expireReservation = (id: string) => {
+    // Optimistic update
     setReservations((prev) =>
       prev.map((r) =>
         r.id === id ? { ...r, status: "expired" as const } : r
       )
     );
+
+    fetch(`/api/reservations/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: "expired" }),
+    }).catch((err) => console.error("Failed to expire reservation:", err));
   };
 
   return (

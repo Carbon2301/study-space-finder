@@ -16,18 +16,17 @@ export default function NotFound() {
           <MapPin className="w-10 h-10 text-violet-400" />
         </div>
         <h1 className="text-3xl font-bold text-slate-800 mb-2">
-          Space not found
+          Không tìm thấy không gian
         </h1>
         <p className="text-slate-500 mb-8">
-          The study space you&apos;re looking for doesn&apos;t exist or has been
-          removed.
+          Không gian học tập bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
         </p>
         <Link
           href="/"
           className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity"
         >
           <Search className="w-4 h-4" />
-          Explore Spaces
+          Khám phá Không gian
         </Link>
       </motion.div>
     </div>

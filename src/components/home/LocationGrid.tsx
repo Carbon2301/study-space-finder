@@ -43,10 +43,10 @@ function EmptyState() {
         <SearchX className="w-9 h-9 text-slate-400" />
       </div>
       <h3 className="text-lg font-semibold text-slate-700 mb-2">
-        No spaces found
+        Không tìm thấy không gian nào
       </h3>
       <p className="text-slate-400 text-sm max-w-sm">
-        Try adjusting your filters or search terms to discover more study spaces.
+        Hãy thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm để khám phá thêm nhiều không gian học tập.
       </p>
     </motion.div>
   );

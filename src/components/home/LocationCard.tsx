@@ -49,9 +49,9 @@ export default function LocationCard({ location, index }: LocationCardProps) {
           >
             {noiseConfig.label}
           </span>
-          {location.priceRange === "Free" && (
+          {location.priceRange === "Miễn phí" && (
             <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/90 text-slate-700 border border-white/50">
-              Free
+              Miễn phí
             </span>
           )}
         </div>
@@ -77,7 +77,7 @@ export default function LocationCard({ location, index }: LocationCardProps) {
             )}
           />
           <span className="text-xs font-semibold text-slate-700">
-            {location.availableSeats} seats
+            Còn {location.availableSeats} chỗ
           </span>
         </div>
       </div>
@@ -109,8 +109,8 @@ export default function LocationCard({ location, index }: LocationCardProps) {
         {/* Occupancy bar */}
         <div className="mb-3">
           <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span>Occupancy</span>
-            <span>{occupancyPct}% full</span>
+            <span>Mật độ sử dụng</span>
+            <span>Đầy {occupancyPct}%</span>
           </div>
           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
@@ -141,7 +141,7 @@ export default function LocationCard({ location, index }: LocationCardProps) {
           ))}
           {location.amenities.length > 4 && (
             <span className="px-2 py-0.5 bg-slate-50 border border-slate-100 rounded-md text-xs text-slate-400">
-              +{location.amenities.length - 4} more
+              +{location.amenities.length - 4} tiện ích khác
             </span>
           )}
         </div>
@@ -152,7 +152,7 @@ export default function LocationCard({ location, index }: LocationCardProps) {
           id={`view-details-${location.id}`}
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all hover:gap-3 active:scale-[0.98]"
         >
-          View Details
+          Xem chi tiết
           <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>

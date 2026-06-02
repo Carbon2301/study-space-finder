@@ -8,8 +8,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { href: "/", label: "Explore" },
-  { href: "/reservations", label: "My Reservations" },
+  { href: "/", label: "Khám phá" },
+  { href: "/reservations", label: "Đặt chỗ của tôi" },
 ];
 
 export default function Navbar() {
@@ -57,7 +57,7 @@ export default function Navbar() {
             className="ml-3 flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-violet-200"
           >
             <BookMarked className="w-3.5 h-3.5" />
-            Book a Space
+            Đặt chỗ ngay
           </Link>
         </div>
 

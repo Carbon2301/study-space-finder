@@ -62,7 +62,7 @@ export default function ImageGallery({ images, name }: ImageGalleryProps) {
             {i === 1 && images.length > 3 && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                 <span className="text-white font-semibold text-lg">
-                  +{images.length - 3} more
+                  +{images.length - 3} ảnh khác
                 </span>
               </div>
             )}

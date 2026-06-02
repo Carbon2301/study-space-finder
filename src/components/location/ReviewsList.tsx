@@ -29,7 +29,7 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   if (reviews.length === 0) {
     return (
       <div className="text-center py-8 text-slate-400">
-        No reviews yet. Be the first!
+        Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!
       </div>
     );
   }

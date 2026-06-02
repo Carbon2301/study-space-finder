@@ -45,7 +45,7 @@ export default function HeroSearch({
           className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 text-sm text-violet-200 mb-6"
         >
           <Sparkles className="w-3.5 h-3.5 text-violet-300" />
-          Find your perfect study spot
+          Tìm kiếm không gian học tập lý tưởng của bạn
         </motion.div>
 
         {/* Heading */}
@@ -55,9 +55,9 @@ export default function HeroSearch({
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-4xl md:text-6xl font-bold text-white mb-4 leading-tight tracking-tight"
         >
-          Study smarter,{" "}
+          Học tập thông minh hơn,{" "}
           <span className="bg-gradient-to-r from-violet-300 to-indigo-300 bg-clip-text text-transparent">
-            not harder
+            hiệu quả hơn
           </span>
         </motion.h1>
 
@@ -67,8 +67,8 @@ export default function HeroSearch({
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-lg text-slate-300 mb-10 max-w-xl mx-auto"
         >
-          Discover and reserve the best study spaces on and around campus —
-          libraries, cafés, labs & more.
+          Khám phá và đặt chỗ các không gian học tập tốt nhất trong và ngoài khuôn viên trường —
+          thư viện, quán cà phê, phòng lab và nhiều hơn nữa.
         </motion.p>
 
         {/* Search Box */}
@@ -84,7 +84,7 @@ export default function HeroSearch({
             <input
               id="search-keyword"
               type="text"
-              placeholder="Library, café, lab..."
+              placeholder="Thư viện, quán cà phê, phòng lab..."
               value={keyword}
               onChange={(e) => onKeywordChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onSearch()}
@@ -101,7 +101,7 @@ export default function HeroSearch({
             <input
               id="search-location"
               type="text"
-              placeholder="Main campus, South campus..."
+              placeholder="Khuôn viên chính, Khu phía Nam..."
               value={location}
               onChange={(e) => onLocationChange(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onSearch()}
@@ -115,7 +115,7 @@ export default function HeroSearch({
             onClick={onSearch}
             className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-all hover:shadow-lg hover:shadow-violet-500/25 active:scale-[0.98]"
           >
-            Search
+            Tìm kiếm
           </button>
         </motion.div>
 
@@ -126,8 +126,8 @@ export default function HeroSearch({
           transition={{ duration: 0.5, delay: 0.5 }}
           className="mt-6 flex flex-wrap justify-center gap-2 text-sm text-slate-400"
         >
-          <span>Popular:</span>
-          {["Library", "Quiet zone", "24/7 access", "Coffee included"].map(
+          <span>Phổ biến:</span>
+          {["Thư viện", "Khu yên tĩnh", "24/7", "Cà phê"].map(
             (tag) => (
               <button
                 key={tag}

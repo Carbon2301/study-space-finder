@@ -26,12 +26,12 @@ export default function ReservationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <BookMarked className="w-6 h-6 text-violet-500" />
-            My Reservations
+            Đặt chỗ của tôi
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             {reservations.length === 0
-              ? "No reservations yet"
-              : `${active.length} active · ${past.length} past`}
+              ? "Chưa có đơn đặt chỗ nào"
+              : `${active.length} đang hoạt động · ${past.length} đã qua`}
           </p>
         </div>
         <Link
@@ -39,7 +39,7 @@ export default function ReservationsPage() {
           className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity shadow-md shadow-violet-200"
         >
           <Plus className="w-4 h-4" />
-          New Booking
+          Đặt chỗ mới
         </Link>
       </motion.div>
 
@@ -55,18 +55,17 @@ export default function ReservationsPage() {
             <CalendarX className="w-10 h-10 text-slate-300" />
           </div>
           <h2 className="text-lg font-semibold text-slate-700 mb-2">
-            No reservations yet
+            Chưa có đơn đặt chỗ nào
           </h2>
           <p className="text-slate-400 text-sm mb-6 max-w-xs mx-auto">
-            Find a study space and reserve your spot in seconds. It&apos;s free
-            and instant!
+            Tìm một không gian học tập và đặt chỗ chỉ trong vài giây. Hoàn toàn miễn phí và tức thì!
           </p>
           <Link
             href="/"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
           >
             <Plus className="w-4 h-4" />
-            Find a Study Space
+            Tìm không gian học tập
           </Link>
         </motion.div>
       )}
@@ -75,7 +74,7 @@ export default function ReservationsPage() {
       {active.length > 0 && (
         <section className="mb-8">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-            Active ({active.length})
+            Đang hoạt động ({active.length})
           </h2>
           <div className="space-y-3">
             {active.map((reservation, i) => (
@@ -93,7 +92,7 @@ export default function ReservationsPage() {
       {past.length > 0 && (
         <section>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-            Past ({past.length})
+            Đã qua ({past.length})
           </h2>
           <div className="space-y-3">
             {past.map((reservation, i) => (

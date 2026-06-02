@@ -1,0 +1,66 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Location {
+  id             String         @id
+  name           String
+  description    String
+  address        String
+  rating         Float
+  reviewCount    Int
+  noiseLevel     String
+  purposes       String[]
+  availableSeats Int
+  totalSeats     Int
+  priceRange     String
+  distance       String
+  tags           String[]
+  amenities      String[]
+  images         String[]
+  openingHours   OpeningHour[]
+  reviews        Review[]
+  reservations   Reservation[]
+}
+
+model OpeningHour {
+  id         String   @id @default(uuid())
+  day        String
+  open       String
+  close      String
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id         String   @id
+  author     String
+  avatar     String
+  rating     Int
+  comment    String
+  date       String
+  purpose    String
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+}
+
+model Reservation {
+  id            String   @id
+  userId        String
+  locationId    String
+  locationName  String
+  locationImage String
+  date          String
+  timeSlot      Json
+  purpose       String
+  seats         Int
+  status        String
+  createdAt     String
+  expiresAt     String
+  location      Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+}
