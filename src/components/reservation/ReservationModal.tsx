@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Calendar, Clock, CheckCircle2, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { Location, TimeSlot, Purpose } from "@/types";
-import { cn, formatCountdown, purposeConfig } from "@/lib/utils";
+import { cn, formatCountdown, purposeConfig, formatTime } from "@/lib/utils";
 import { useReservations } from "@/lib/store";
 
 interface ReservationModalProps {
@@ -33,6 +33,7 @@ export default function ReservationModal({
   const [seats, setSeats] = useState(1);
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [countdown, setCountdown] = useState("");
+  const [note, setNote] = useState("");
 
   // Quản lý khung giờ động
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -71,6 +72,7 @@ export default function ReservationModal({
       setSelectedSlot(null);
       setSelectedPurpose("solo");
       setSeats(1);
+      setNote("");
       const todayStr = new Date().toISOString().split("T")[0];
       setSelectedDate(todayStr);
       fetchSlotsAvailability(todayStr);
@@ -130,6 +132,7 @@ export default function ReservationModal({
       status: "active",
       createdAt: new Date().toISOString(),
       expiresAt: expiryDate,
+      note,
     });
 
     setStep("success");
@@ -247,14 +250,17 @@ export default function ReservationModal({
                               <p className="text-xs text-slate-500 mt-0.5">
                                 {slot.startTime} – {slot.endTime}
                               </p>
-                              {(slot as any).availableSeats !== undefined && (
-                                <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
-                                  {slot.available ? `Còn ${(slot as any).availableSeats} chỗ` : "Hết chỗ"}
-                                </p>
-                              )}
+                               {(slot as any).availableSeats !== undefined && (
+                                 <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                                   {slot.available ? `Còn ${(slot as any).availableSeats} chỗ` : "Hết chỗ"}
+                                   {slot.bookedPeople !== undefined && (
+                                     <> · {slot.bookedPeople} người đặt</>
+                                   )}
+                                 </p>
+                               )}
                               {!slot.available && (
                                 <span className="absolute top-2 right-2 text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-md">
-                                  Đầy
+                                  {slot.isPast ? "Đã qua" : "Đầy"}
                                 </span>
                               )}
                               {selectedSlot?.id === slot.id && (
@@ -329,6 +335,21 @@ export default function ReservationModal({
                         </span>
                       </div>
                     </div>
+
+                    {/* Note */}
+                    <div>
+                      <label htmlFor="reservation-note" className="text-sm font-semibold text-slate-700 mb-2 block">
+                        Ghi chú cho cửa hàng (tùy chọn)
+                      </label>
+                      <textarea
+                        id="reservation-note"
+                        rows={2}
+                        placeholder="Ví dụ: Cần bàn gần cửa sổ, yên tĩnh, chuẩn bị trước ổ cắm..."
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none placeholder:text-slate-400"
+                      />
+                    </div>
                   </motion.div>
                 ) : (
                   <motion.div
@@ -363,14 +384,14 @@ export default function ReservationModal({
                       <div className="flex items-center justify-center gap-2 text-amber-700 mb-2">
                         <Timer className="w-4 h-4" />
                         <span className="text-sm font-semibold">
-                          Thời gian giữ chỗ
+                          Thời gian giữ chỗ (Hết hạn lúc {formatTime(expiresAt)})
                         </span>
                       </div>
                       <div className="text-5xl font-bold text-amber-600 font-mono">
                         {countdown || "15:00"}
                       </div>
                       <p className="text-xs text-amber-600/70 mt-2">
-                        Vui lòng check-in trước khi hết giờ, nếu không chỗ đặt của bạn sẽ tự động bị hủy
+                        Vui lòng check-in trước {formatTime(expiresAt)}, nếu không chỗ đặt của bạn sẽ tự động bị hủy
                       </p>
                     </div>
 

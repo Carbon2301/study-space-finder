@@ -12,9 +12,9 @@ interface LocationGridProps {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
-      <div className="h-48 bg-slate-200" />
-      <div className="p-4 space-y-3">
+    <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse flex flex-col h-full">
+      <div className="h-48 bg-slate-200 shrink-0" />
+      <div className="p-4 space-y-3 flex flex-col flex-grow">
         <div className="flex justify-between">
           <div className="h-4 bg-slate-200 rounded w-2/3" />
           <div className="h-4 bg-slate-200 rounded w-12" />
@@ -26,7 +26,7 @@ function SkeletonCard() {
             <div key={i} className="h-5 bg-slate-100 rounded-md w-16" />
           ))}
         </div>
-        <div className="h-10 bg-slate-200 rounded-xl" />
+        <div className="h-10 bg-slate-200 rounded-xl mt-auto" />
       </div>
     </div>
   );

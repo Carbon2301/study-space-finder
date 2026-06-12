@@ -50,6 +50,9 @@ export interface TimeSlot {
   startTime: string;
   endTime: string;
   available: boolean;
+  availableSeats?: number;
+  bookedPeople?: number;
+  isPast?: boolean;
 }
 
 export interface Reservation {
@@ -64,4 +67,5 @@ export interface Reservation {
   status: ReservationStatus;
   createdAt: string;
   expiresAt: string; // ISO string for countdown
+  note?: string;
 }

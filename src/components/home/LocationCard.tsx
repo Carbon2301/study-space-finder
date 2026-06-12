@@ -25,10 +25,10 @@ export default function LocationCard({ location, index }: LocationCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.08 }}
       whileHover={{ y: -4 }}
-      className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300 overflow-hidden"
+      className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300 overflow-hidden flex flex-col h-full"
     >
       {/* Image */}
-      <div className="relative h-48 overflow-hidden bg-slate-100">
+      <div className="relative h-48 overflow-hidden bg-slate-100 shrink-0">
         <Image
           src={location.images[0]}
           alt={location.name}
@@ -83,7 +83,7 @@ export default function LocationCard({ location, index }: LocationCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-grow">
         {/* Name + Rating */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <h3 className="font-semibold text-slate-900 text-base leading-tight group-hover:text-violet-700 transition-colors">
@@ -150,7 +150,7 @@ export default function LocationCard({ location, index }: LocationCardProps) {
         <Link
           href={`/locations/${location.id}`}
           id={`view-details-${location.id}`}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all hover:gap-3 active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all hover:gap-3 active:scale-[0.98] mt-auto"
         >
           Xem chi tiết
           <ArrowRight className="w-3.5 h-3.5" />

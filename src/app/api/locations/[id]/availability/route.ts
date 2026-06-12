@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cleanupExpiredReservations } from "@/lib/cleanup";
+import { getFakeBookedSeats, getFakeBookedPeople, getTodayString, getLocalTimeInVN } from "@/lib/utils";
 import { mockTimeSlots } from "@/lib/mock-data";
 
 export async function GET(
@@ -44,6 +45,10 @@ export async function GET(
       },
     });
 
+    const todayStr = getTodayString();
+    const vnDate = getLocalTimeInVN();
+    const currentMinutes = vnDate.getHours() * 60 + vnDate.getMinutes();
+
     // 4. Tính toán chỗ trống cho từng khung giờ
     const dynamicTimeSlots = mockTimeSlots.map((slot) => {
       // Lọc các đơn đặt chỗ thuộc slot này
@@ -52,16 +57,33 @@ export async function GET(
         return s && s.id === slot.id;
       });
 
-      // Tính tổng số ghế đã bị chiếm
-      const takenSeats = slotReservations.reduce((sum, res) => sum + res.seats, 0);
-      const remainingSeats = Math.max(0, location.totalSeats - takenSeats);
+      // Tính tổng số ghế đã bị chiếm thực tế + fake
+      const fakeTakenSeats = getFakeBookedSeats(id, slot.id, date, location.totalSeats);
+      const actualTakenSeats = slotReservations.reduce((sum, res) => sum + res.seats, 0);
+      const remainingSeats = Math.max(0, location.totalSeats - fakeTakenSeats - actualTakenSeats);
+
+      // Tính số người đã đặt trước (thực tế + fake)
+      const fakePeople = getFakeBookedPeople(id, slot.id, date, fakeTakenSeats);
+      const actualPeople = slotReservations.length;
+      const totalBookedPeople = fakePeople + actualPeople;
+
+      // Kiểm tra xem khung giờ đã qua chưa (chỉ xét ngày hôm nay)
+      const [endH, endM] = slot.endTime.split(":").map(Number);
+      const endMinutes = endH * 60 + endM;
+      const isPast = (date === todayStr) && (currentMinutes >= endMinutes);
+
+      const isAvailable = remainingSeats > 0 && !isPast;
 
       return {
         ...slot,
         // Cập nhật lại số ghế trống thực tế cho slot này
         availableSeats: remainingSeats,
-        // Một slot khả dụng nếu còn ít nhất 1 ghế trống
-        available: remainingSeats > 0,
+        // Một slot khả dụng nếu còn ít nhất 1 ghế trống và chưa trôi qua
+        available: isAvailable,
+        // Trả về số người đã đặt trước
+        bookedPeople: totalBookedPeople,
+        // Đánh dấu nếu khung giờ đã trôi qua
+        isPast,
       };
     });
 

@@ -62,5 +62,6 @@ model Reservation {
   status        String
   createdAt     String
   expiresAt     String
+  note          String?
   location      Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 }

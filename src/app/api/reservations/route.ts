@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
       status,
       createdAt,
       expiresAt,
+      note,
     } = body;
 
     if (!userId || !locationId || !timeSlot || !seats) {
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
           status,
           createdAt,
           expiresAt,
+          note: note || "",
         },
       });
     });

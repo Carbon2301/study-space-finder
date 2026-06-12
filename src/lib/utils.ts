@@ -27,6 +27,14 @@ export function formatCountdown(expiresAt: string): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+export function formatTime(isoString: string): string {
+  if (!isoString) return "";
+  const date = new Date(isoString);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
 export function generateId(): string {
   return Math.random().toString(36).substr(2, 9);
 }
@@ -119,5 +127,65 @@ export function getCurrentTimeSlot(timeSlots: TimeSlot[]): TimeSlot | null {
   }
 
   return null;
+}
+
+export function getFakeBookedSeats(
+  locationId: string,
+  slotId: string,
+  dateStr: string,
+  totalSeats: number
+): number {
+  // Sinh số giả lập dựa trên hash của locationId, slotId, dateStr
+  const str = `${locationId}-${slotId}-${dateStr}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  
+  const absHash = Math.abs(hash);
+  
+  // Mật độ đặt chỗ ngẫu nhiên ổn định trong khoảng 35% đến 80%
+  const minRate = 0.35;
+  const maxRate = 0.8;
+  const rateRange = maxRate - minRate;
+  
+  const fakeRate = minRate + ((absHash % 100) / 100) * rateRange;
+  
+  // Luôn đảm bảo trống tối thiểu 3 chỗ để user có thể thực hiện đặt chỗ thử nghiệm
+  const maxFakeSeats = Math.max(0, totalSeats - 3);
+  const fakeSeats = Math.round(totalSeats * fakeRate);
+  
+  return Math.min(maxFakeSeats, fakeSeats);
+}
+
+export function getFakeBookedPeople(
+  locationId: string,
+  slotId: string,
+  dateStr: string,
+  baseBookedSeats: number
+): number {
+  const basePeople = Math.max(1, Math.round(baseBookedSeats / 1.8));
+  
+  // Lấy múi giờ VN hiện tại để tính block 15 phút
+  const vnDate = getLocalTimeInVN();
+  const minutesSinceMidnight = vnDate.getHours() * 60 + vnDate.getMinutes();
+  const block15 = Math.floor(minutesSinceMidnight / 15);
+  
+  // Tạo seed thay đổi mỗi 15 phút
+  const str = `${locationId}-${slotId}-${dateStr}-${block15}`;
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  
+  const absHash = Math.abs(hash);
+  // Biến thiên nhẹ trong khoảng [-1, 0, 1] hoặc [-2, -1, 0, 1, 2] tùy thuộc vào basePeople
+  const maxChange = basePeople > 8 ? 2 : 1;
+  const range = maxChange * 2 + 1;
+  const offset = (absHash % range) - maxChange;
+  
+  return Math.max(1, basePeople + offset);
 }
 

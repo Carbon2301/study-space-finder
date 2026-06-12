@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Reservation } from "@/types";
-import { formatDate, formatCountdown, purposeConfig, cn } from "@/lib/utils";
+import { formatDate, formatCountdown, purposeConfig, cn, formatTime } from "@/lib/utils";
 import { useReservations } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -138,17 +138,30 @@ export default function ReservationItem({
             </span>
           </div>
 
+          {/* Note */}
+          {reservation.note && (
+            <div className="text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-lg p-2.5 mb-3 italic">
+              <span className="font-semibold not-italic text-slate-500">Ghi chú: </span>
+              {"\""}{reservation.note}{"\""}
+            </div>
+          )}
+
           {/* Countdown (active only) */}
           {reservation.status === "active" && (
-            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mb-3">
               <Timer className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
-              <div>
-                <p className="text-xs text-amber-700 font-medium">
-                  Thời gian giữ chỗ còn
-                </p>
-                <p className="font-mono text-sm font-bold text-amber-600">
+              <div className="flex-1 flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-amber-700 font-medium">
+                    Giữ chỗ đến <span className="font-bold">{formatTime(reservation.expiresAt)}</span>
+                  </p>
+                  <p className="text-[10px] text-amber-600/70">
+                    Tự động hủy nếu không check-in
+                  </p>
+                </div>
+                <div className="font-mono text-sm font-bold text-amber-600 bg-white/70 px-2.5 py-1 rounded border border-amber-100 shrink-0">
                   {countdown || "15:00"}
-                </p>
+                </div>
               </div>
             </div>
           )}
