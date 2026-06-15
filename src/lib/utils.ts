@@ -80,6 +80,7 @@ export const purposeConfig = {
   group: { label: "Học nhóm", icon: "👥" },
   meeting: { label: "Họp hành", icon: "🤝" },
   recording: { label: "Thu âm", icon: "🎙️" },
+  other: { label: "Khác", icon: "✨" },
 };
 
 export const amenityIcons: Record<string, string> = {

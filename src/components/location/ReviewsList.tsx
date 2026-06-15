@@ -37,7 +37,10 @@ export default function ReviewsList({ reviews }: ReviewsListProps) {
   return (
     <div className="space-y-4">
       {reviews.map((review) => {
-        const purpose = purposeConfig[review.purpose];
+        const purpose = purposeConfig[review.purpose as keyof typeof purposeConfig] || {
+          label: review.purpose,
+          icon: "✨",
+        };
         return (
           <div
             key={review.id}

@@ -30,6 +30,7 @@ export default function ReservationModal({
   });
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [selectedPurpose, setSelectedPurpose] = useState<Purpose>("solo");
+  const [customPurpose, setCustomPurpose] = useState("");
   const [seats, setSeats] = useState(1);
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [note, setNote] = useState("");
@@ -84,6 +85,7 @@ export default function ReservationModal({
         setStep("form");
         setSelectedSlot(null);
         setSelectedPurpose("solo");
+        setCustomPurpose("");
         setSeats(1);
         setNote("");
         setSelectedDate(todayStr);
@@ -127,13 +129,15 @@ export default function ReservationModal({
     const expiryDate = new Date(slotStart.getTime() + 15 * 60 * 1000).toISOString();
     setExpiresAt(expiryDate);
 
+    const finalPurpose = selectedPurpose === "other" ? (customPurpose.trim() || "Khác") : selectedPurpose;
+
     addReservation({
       locationId: location.id,
       locationName: location.name,
       locationImage: location.images[0],
       date: selectedDate,
       timeSlot: selectedSlot,
-      purpose: selectedPurpose,
+      purpose: finalPurpose as Purpose,
       seats,
       status: "active",
       createdAt: new Date().toISOString(),
@@ -150,7 +154,7 @@ export default function ReservationModal({
   // Ngày tối thiểu = hôm nay
   const today = new Date().toISOString().split("T")[0];
 
-  const purposes: Purpose[] = ["solo", "group", "meeting", "recording"];
+  const purposes: Purpose[] = ["solo", "group", "meeting", "recording", "other"];
 
   return (
     <AnimatePresence>
@@ -273,7 +277,8 @@ export default function ReservationModal({
                                   "flex items-center gap-2 p-2.5 rounded-xl border text-sm font-medium transition-all",
                                   selectedPurpose === p
                                     ? "border-indigo-400 bg-indigo-50 text-indigo-700"
-                                    : "border-slate-200 text-slate-600 hover:border-indigo-300"
+                                    : "border-slate-200 text-slate-600 hover:border-indigo-300",
+                                  p === "other" && "col-span-2 justify-center"
                                 )}
                               >
                                 <span>{pc.icon}</span>
@@ -282,6 +287,18 @@ export default function ReservationModal({
                             );
                           })}
                         </div>
+                        {selectedPurpose === "other" && (
+                          <div className="mt-2.5">
+                            <input
+                              type="text"
+                              id="custom-purpose"
+                              placeholder="Nhập mục đích khác (VD: Quay phim, Sự kiện...)"
+                              value={customPurpose}
+                              onChange={(e) => setCustomPurpose(e.target.value)}
+                              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Cột 3: Ghi chú */}
@@ -362,12 +379,9 @@ export default function ReservationModal({
                                   {slot.startTime}
                                 </p>
                               </div>
-                              {slot.availableSeats !== undefined && (
+                              {slot.bookedPeople !== undefined && (
                                 <p className="text-[10px] text-slate-400 mt-0.5 font-medium leading-none">
-                                  {slot.available ? `Còn ${slot.availableSeats} chỗ` : "Hết chỗ"}
-                                  {slot.bookedPeople !== undefined && (
-                                    <span className="hidden sm:inline"> · {slot.bookedPeople} người</span>
-                                  )}
+                                  {slot.bookedPeople} người đặt
                                 </p>
                               )}
                               {!slot.available && (

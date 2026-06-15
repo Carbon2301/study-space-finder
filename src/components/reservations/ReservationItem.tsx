@@ -26,7 +26,10 @@ export default function ReservationItem({
   index,
 }: ReservationItemProps) {
   const { cancelReservation, expireReservation } = useReservations();
-  const purpose = purposeConfig[reservation.purpose];
+  const purpose = purposeConfig[reservation.purpose as keyof typeof purposeConfig] || {
+    label: reservation.purpose,
+    icon: "✨",
+  };
 
   useEffect(() => {
     if (reservation.status !== "active") return;

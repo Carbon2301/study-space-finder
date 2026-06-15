@@ -1,5 +1,5 @@
 export type NoiseLevel = "quiet" | "medium" | "noisy";
-export type Purpose = "solo" | "group" | "meeting" | "recording";
+export type Purpose = "solo" | "group" | "meeting" | "recording" | "other";
 export type ReservationStatus = "active" | "expired" | "cancelled";
 
 export interface Amenity {
