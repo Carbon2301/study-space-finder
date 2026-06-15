@@ -19,25 +19,29 @@ interface ReservationStore {
 
 const ReservationContext = createContext<ReservationStore | null>(null);
 
-const STORAGE_KEY = "study-space-reservations";
 const USER_ID_KEY = "study-space-user-id";
 
 export function ReservationProvider({ children }: { children: ReactNode }) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [userId, setUserId] = useState<string>("");
-
-  // Load userId and fetch reservations on mount
-  useEffect(() => {
-    let localUserId = localStorage.getItem(USER_ID_KEY);
-    if (!localUserId) {
-      localUserId = generateId();
-      localStorage.setItem(USER_ID_KEY, localUserId);
+  const [userId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      let localUserId = localStorage.getItem(USER_ID_KEY);
+      if (!localUserId) {
+        localUserId = generateId();
+        localStorage.setItem(USER_ID_KEY, localUserId);
+      }
+      return localUserId;
     }
-    setUserId(localUserId);
+    return "";
+  });
+
+  // Load reservations once userId is available on client
+  useEffect(() => {
+    if (!userId) return;
 
     const fetchReservations = async () => {
       try {
-        const res = await fetch(`/api/reservations?userId=${localUserId}`);
+        const res = await fetch(`/api/reservations?userId=${userId}`);
         if (res.ok) {
           const data = await res.json();
           setReservations(data);
@@ -48,7 +52,7 @@ export function ReservationProvider({ children }: { children: ReactNode }) {
     };
 
     fetchReservations();
-  }, []);
+  }, [userId]);
 
   const addReservation = (reservation: Omit<Reservation, "id">): string => {
     const tempId = generateId();

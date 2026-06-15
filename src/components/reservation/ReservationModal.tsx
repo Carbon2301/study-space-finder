@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Calendar, Clock, CheckCircle2, Timer } from "lucide-react";
 import { toast } from "sonner";
 import { Location, TimeSlot, Purpose } from "@/types";
-import { cn, formatCountdown, purposeConfig, formatTime } from "@/lib/utils";
+import { cn, purposeConfig, formatDateTime } from "@/lib/utils";
 import { useReservations } from "@/lib/store";
 
 interface ReservationModalProps {
@@ -32,93 +32,99 @@ export default function ReservationModal({
   const [selectedPurpose, setSelectedPurpose] = useState<Purpose>("solo");
   const [seats, setSeats] = useState(1);
   const [expiresAt, setExpiresAt] = useState<string>("");
-  const [countdown, setCountdown] = useState("");
   const [note, setNote] = useState("");
+  const [timeSearch, setTimeSearch] = useState("");
 
   // Quản lý khung giờ động
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
 
+  const filteredSlots = timeSlots.filter((slot) => {
+    if (!timeSearch) return true;
+    const cleanSearch = timeSearch.trim().toLowerCase().replace("h", ":");
+    return (
+      slot.startTime.includes(cleanSearch) ||
+      slot.startTime.replace(/^0/, "").includes(cleanSearch)
+    );
+  });
+
   // Fetch slot trống động theo ngày
-  const fetchSlotsAvailability = async (date: string) => {
+  const fetchSlotsAvailability = useCallback(async (date: string) => {
     setLoadingSlots(true);
     try {
       const res = await fetch(`/api/locations/${location.id}/availability?date=${date}`);
       if (res.ok) {
         const data = await res.json();
         setTimeSlots(data.timeSlots);
-        
-        // Nếu đang chọn một slot, cập nhật lại hoặc reset nếu slot đó không còn khả dụng
-        if (selectedSlot) {
-          const updatedSlot = data.timeSlots.find((s: any) => s.id === selectedSlot.id);
-          if (!updatedSlot || !updatedSlot.available) {
-            setSelectedSlot(null);
-          } else {
-            setSelectedSlot(updatedSlot);
-          }
-        }
       }
     } catch (err) {
       console.error("Failed to load slot availability:", err);
     } finally {
       setLoadingSlots(false);
     }
-  };
+  }, [location.id]);
+
+  // Cập nhật lại hoặc reset selectedSlot khi timeSlots thay đổi
+  useEffect(() => {
+    if (selectedSlot && timeSlots.length > 0) {
+      const updatedSlot = timeSlots.find((s) => s.startTime === selectedSlot.startTime && s.endTime === selectedSlot.endTime);
+      if (!updatedSlot || !updatedSlot.available) {
+        setTimeout(() => setSelectedSlot(null), 0);
+      } else if (updatedSlot.availableSeats !== selectedSlot.availableSeats || updatedSlot.available !== selectedSlot.available) {
+        setTimeout(() => setSelectedSlot(updatedSlot), 0);
+      }
+    }
+  }, [timeSlots, selectedSlot]);
 
   // Reset khi mở modal và fetch dữ liệu ngày hôm nay
   useEffect(() => {
     if (open) {
-      setStep("form");
-      setSelectedSlot(null);
-      setSelectedPurpose("solo");
-      setSeats(1);
-      setNote("");
       const todayStr = new Date().toISOString().split("T")[0];
-      setSelectedDate(todayStr);
-      fetchSlotsAvailability(todayStr);
+      setTimeout(() => {
+        setStep("form");
+        setSelectedSlot(null);
+        setSelectedPurpose("solo");
+        setSeats(1);
+        setNote("");
+        setSelectedDate(todayStr);
+        setTimeSearch("");
+        fetchSlotsAvailability(todayStr);
+      }, 0);
     }
-  }, [open]);
+  }, [open, fetchSlotsAvailability]);
 
   // Fetch lại khi đổi ngày
   useEffect(() => {
     if (open && selectedDate) {
-      fetchSlotsAvailability(selectedDate);
+      setTimeout(() => {
+        setTimeSearch("");
+        fetchSlotsAvailability(selectedDate);
+      }, 0);
     }
-  }, [selectedDate]);
+  }, [open, selectedDate, fetchSlotsAvailability]);
 
   // Tự động giới hạn/điều chỉnh số ghế khi đổi slot
   useEffect(() => {
     if (selectedSlot) {
-      const max = (selectedSlot as any).availableSeats ?? 1;
+      const max = selectedSlot.availableSeats ?? 1;
       if (seats > max) {
-        setSeats(Math.max(1, max));
+        setTimeout(() => setSeats(Math.max(1, max)), 0);
       }
     } else {
-      setSeats(1);
-    }
-  }, [selectedSlot]);
-
-  // Countdown timer cho màn hình thành công
-  useEffect(() => {
-    if (step !== "success" || !expiresAt) return;
-    const interval = setInterval(() => {
-      const remaining = formatCountdown(expiresAt);
-      setCountdown(remaining);
-      if (remaining === "Expired") {
-        clearInterval(interval);
+      if (seats !== 1) {
+        setTimeout(() => setSeats(1), 0);
       }
-    }, 1000);
-    setCountdown(formatCountdown(expiresAt));
-    return () => clearInterval(interval);
-  }, [step, expiresAt]);
+    }
+  }, [selectedSlot, seats]);
 
   const handleConfirm = () => {
     if (!selectedSlot) {
       toast.error("Vui lòng chọn một khung giờ");
       return;
     }
-    // Giữ chỗ trong 15 phút
-    const expiryDate = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    // Giữ chỗ trong 15 phút tính từ lúc bắt đầu của khung giờ
+    const slotStart = new Date(`${selectedDate}T${selectedSlot.startTime}:00`);
+    const expiryDate = new Date(slotStart.getTime() + 15 * 60 * 1000).toISOString();
     setExpiresAt(expiryDate);
 
     addReservation({
@@ -136,7 +142,7 @@ export default function ReservationModal({
     });
 
     setStep("success");
-    toast.success("Đã giữ chỗ thành công! Bạn có 15 phút để check-in.", {
+    toast.success("Đã giữ chỗ thành công! Vui lòng check-in trước thời gian hết hạn.", {
       duration: 5000,
     });
   };
@@ -165,7 +171,7 @@ export default function ReservationModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg z-[70] bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-lg md:max-w-5xl z-[70] bg-white rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -185,7 +191,7 @@ export default function ReservationModal({
             </div>
 
             {/* Body */}
-            <div className="p-5 max-h-[65vh] overflow-y-auto">
+            <div className="p-5 max-h-[85vh] md:max-h-[75vh] overflow-y-auto">
               <AnimatePresence mode="wait">
                 {step === "form" ? (
                   <motion.div
@@ -193,41 +199,148 @@ export default function ReservationModal({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="space-y-5"
+                    className="flex flex-col space-y-5"
                   >
-                    {/* Date */}
-                    <div>
-                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
-                        <Calendar className="w-4 h-4 text-violet-500" />
-                        Chọn ngày
-                      </label>
-                      <input
-                        id="reservation-date"
-                        type="date"
-                        min={today}
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                      />
+                    {/* Phần trên: Nhập thông tin (3 cột trên desktop) */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-5 border-b border-slate-100">
+                      {/* Cột 1: Ngày & Ghế */}
+                      <div className="space-y-4">
+                        {/* Date */}
+                        <div>
+                          <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                            <Calendar className="w-4 h-4 text-violet-500" />
+                            Chọn ngày
+                          </label>
+                          <input
+                            id="reservation-date"
+                            type="date"
+                            min={today}
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        {/* Seats */}
+                        <div>
+                          <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                            Số lượng ghế
+                          </label>
+                          <div className="flex items-center gap-3">
+                            <button
+                              disabled={!selectedSlot}
+                              onClick={() => setSeats(Math.max(1, seats - 1))}
+                              className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              −
+                            </button>
+                            <span className="w-8 text-center font-semibold text-slate-800">
+                              {seats}
+                            </span>
+                            <button
+                              disabled={!selectedSlot || seats >= (selectedSlot?.availableSeats ?? 0)}
+                              onClick={() => {
+                                const max = selectedSlot?.availableSeats ?? 1;
+                                setSeats(Math.min(max, seats + 1));
+                              }}
+                              className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              +
+                            </button>
+                            <span className="text-xs text-slate-400">
+                              {!selectedSlot
+                                ? "(Chọn giờ trước)"
+                                : `(tối đa ${selectedSlot?.availableSeats ?? 0})`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cột 2: Mục đích sử dụng */}
+                      <div>
+                        <label className="text-sm font-semibold text-slate-700 mb-2 block">
+                          Mục đích sử dụng
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {purposes.map((p) => {
+                            const pc = purposeConfig[p];
+                            return (
+                              <button
+                                key={p}
+                                id={`purpose-${p}`}
+                                onClick={() => setSelectedPurpose(p)}
+                                className={cn(
+                                  "flex items-center gap-2 p-2.5 rounded-xl border text-sm font-medium transition-all",
+                                  selectedPurpose === p
+                                    ? "border-indigo-400 bg-indigo-50 text-indigo-700"
+                                    : "border-slate-200 text-slate-600 hover:border-indigo-300"
+                                )}
+                              >
+                                <span>{pc.icon}</span>
+                                {pc.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Cột 3: Ghi chú */}
+                      <div>
+                        <label htmlFor="reservation-note" className="text-sm font-semibold text-slate-700 mb-2 block">
+                          Ghi chú cho cửa hàng (tùy chọn)
+                        </label>
+                        <textarea
+                          id="reservation-note"
+                          rows={4}
+                          placeholder="Ví dụ: Bàn gần cửa sổ, chuẩn bị trước ổ cắm..."
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          className="w-full h-[105px] border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none placeholder:text-slate-400"
+                        />
+                      </div>
                     </div>
 
-                    {/* Time Slots */}
+                    {/* Phần dưới: Chọn giờ đến (Trải rộng hết chiều ngang) */}
                     <div>
-                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
-                        <Clock className="w-4 h-4 text-violet-500" />
-                        Chọn khung giờ
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {loadingSlots ? (
-                          <div className="col-span-2 text-center py-6 text-sm text-slate-400">
-                            Đang tải khung giờ...
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-2 border-b border-slate-50">
+                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <Clock className="w-4 h-4 text-violet-500" />
+                          Chọn giờ bạn sẽ đến
+                        </label>
+                        
+                        {/* Lọc nhanh mốc giờ */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500 font-medium">Tìm nhanh mốc giờ:</span>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Nhập giờ (Ví dụ: 08, 13:30...)"
+                              value={timeSearch}
+                              onChange={(e) => setTimeSearch(e.target.value)}
+                              className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent w-48 transition-all"
+                            />
+                            {timeSearch && (
+                              <button
+                                onClick={() => setTimeSearch("")}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
-                        ) : timeSlots.length === 0 ? (
-                          <div className="col-span-2 text-center py-6 text-sm text-slate-400">
-                            Không có khung giờ nào khả dụng
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 overflow-y-auto pr-1 max-h-[260px] md:max-h-[340px]">
+                        {loadingSlots ? (
+                          <div className="col-span-full text-center py-10 text-sm text-slate-400">
+                            Đang tải giờ đến...
+                          </div>
+                        ) : filteredSlots.length === 0 ? (
+                          <div className="col-span-full text-center py-10 text-sm text-slate-400">
+                            Không có mốc giờ nào phù hợp với &quot;{timeSearch}&quot;
                           </div>
                         ) : (
-                          timeSlots.map((slot) => (
+                          filteredSlots.map((slot) => (
                             <button
                               key={slot.id}
                               id={`slot-${slot.id}`}
@@ -236,7 +349,7 @@ export default function ReservationModal({
                                 slot.available && setSelectedSlot(slot)
                               }
                               className={cn(
-                                "relative p-3 rounded-xl border text-left transition-all",
+                                "relative p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between h-[68px]",
                                 !slot.available
                                   ? "opacity-40 cursor-not-allowed bg-slate-50 border-slate-200"
                                   : selectedSlot?.id === slot.id
@@ -244,111 +357,33 @@ export default function ReservationModal({
                                   : "border-slate-200 hover:border-violet-300 hover:bg-violet-50/50"
                               )}
                             >
-                              <p className="font-semibold text-sm text-slate-800">
-                                {slot.label}
-                              </p>
-                              <p className="text-xs text-slate-500 mt-0.5">
-                                {slot.startTime} – {slot.endTime}
-                              </p>
-                               {(slot as any).availableSeats !== undefined && (
-                                 <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
-                                   {slot.available ? `Còn ${(slot as any).availableSeats} chỗ` : "Hết chỗ"}
-                                   {slot.bookedPeople !== undefined && (
-                                     <> · {slot.bookedPeople} người đặt</>
-                                   )}
-                                 </p>
-                               )}
+                              <div>
+                                <p className="font-bold text-base text-slate-800">
+                                  {slot.startTime}
+                                </p>
+                              </div>
+                              {slot.availableSeats !== undefined && (
+                                <p className="text-[10px] text-slate-400 mt-0.5 font-medium leading-none">
+                                  {slot.available ? `Còn ${slot.availableSeats} chỗ` : "Hết chỗ"}
+                                  {slot.bookedPeople !== undefined && (
+                                    <span className="hidden sm:inline"> · {slot.bookedPeople} người</span>
+                                  )}
+                                </p>
+                              )}
                               {!slot.available && (
-                                <span className="absolute top-2 right-2 text-xs bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-md">
+                                <span className="absolute top-2 right-2 text-[9px] bg-slate-200 text-slate-500 px-1 py-0.5 rounded leading-none">
                                   {slot.isPast ? "Đã qua" : "Đầy"}
                                 </span>
                               )}
                               {selectedSlot?.id === slot.id && (
                                 <div className="absolute top-2 right-2">
-                                  <CheckCircle2 className="w-4 h-4 text-violet-600" />
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-violet-600" />
                                 </div>
                               )}
                             </button>
                           ))
                         )}
                       </div>
-                    </div>
-
-                    {/* Purpose */}
-                    <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                        Mục đích sử dụng
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {purposes.map((p) => {
-                          const pc = purposeConfig[p];
-                          return (
-                            <button
-                              key={p}
-                              id={`purpose-${p}`}
-                              onClick={() => setSelectedPurpose(p)}
-                              className={cn(
-                                "flex items-center gap-2 p-3 rounded-xl border text-sm font-medium transition-all",
-                                selectedPurpose === p
-                                  ? "border-indigo-400 bg-indigo-50 text-indigo-700"
-                                  : "border-slate-200 text-slate-600 hover:border-indigo-300"
-                              )}
-                            >
-                              <span>{pc.icon}</span>
-                              {pc.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Seats */}
-                    <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-2 block">
-                        Số lượng ghế
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <button
-                          disabled={!selectedSlot}
-                          onClick={() => setSeats(Math.max(1, seats - 1))}
-                          className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          −
-                        </button>
-                        <span className="w-8 text-center font-semibold text-slate-800">
-                          {seats}
-                        </span>
-                        <button
-                          disabled={!selectedSlot || seats >= ((selectedSlot as any).availableSeats ?? 0)}
-                          onClick={() => {
-                            const max = (selectedSlot as any).availableSeats ?? 1;
-                            setSeats(Math.min(max, seats + 1));
-                          }}
-                          className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 font-bold text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          +
-                        </button>
-                        <span className="text-xs text-slate-400">
-                          {!selectedSlot
-                            ? "(Vui lòng chọn khung giờ trước)"
-                            : `(tối đa còn ${(selectedSlot as any).availableSeats ?? 0} chỗ trống)`}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Note */}
-                    <div>
-                      <label htmlFor="reservation-note" className="text-sm font-semibold text-slate-700 mb-2 block">
-                        Ghi chú cho cửa hàng (tùy chọn)
-                      </label>
-                      <textarea
-                        id="reservation-note"
-                        rows={2}
-                        placeholder="Ví dụ: Cần bàn gần cửa sổ, yên tĩnh, chuẩn bị trước ổ cắm..."
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none placeholder:text-slate-400"
-                      />
                     </div>
                   </motion.div>
                 ) : (
@@ -375,23 +410,22 @@ export default function ReservationModal({
                     <p className="text-slate-500 text-sm mb-6">
                       Đã đặt {seats} chỗ ngồi tại <strong>{location.name}</strong>
                       <br />
-                      {selectedDate} · {selectedSlot?.startTime} –{" "}
-                      {selectedSlot?.endTime}
+                      {selectedDate} · Giờ đến dự kiến: {selectedSlot?.startTime}
                     </p>
 
-                    {/* Countdown */}
+                    {/* Hết hạn giữ chỗ */}
                     <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-4">
                       <div className="flex items-center justify-center gap-2 text-amber-700 mb-2">
                         <Timer className="w-4 h-4" />
                         <span className="text-sm font-semibold">
-                          Thời gian giữ chỗ (Hết hạn lúc {formatTime(expiresAt)})
+                          Thời gian giữ chỗ
                         </span>
                       </div>
-                      <div className="text-5xl font-bold text-amber-600 font-mono">
-                        {countdown || "15:00"}
+                      <div className="text-lg font-bold text-amber-600">
+                        {formatDateTime(expiresAt)}
                       </div>
                       <p className="text-xs text-amber-600/70 mt-2">
-                        Vui lòng check-in trước {formatTime(expiresAt)}, nếu không chỗ đặt của bạn sẽ tự động bị hủy
+                        Vui lòng check-in trước {formatDateTime(expiresAt)}, nếu không chỗ đặt của bạn sẽ tự động bị hủy
                       </p>
                     </div>
 

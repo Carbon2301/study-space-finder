@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   MapPin,
@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { Reservation } from "@/types";
-import { formatDate, formatCountdown, purposeConfig, cn, formatTime } from "@/lib/utils";
+import { formatDate, purposeConfig, cn, formatDateTime } from "@/lib/utils";
 import { useReservations } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -26,23 +26,22 @@ export default function ReservationItem({
   index,
 }: ReservationItemProps) {
   const { cancelReservation, expireReservation } = useReservations();
-  const [countdown, setCountdown] = useState("");
   const purpose = purposeConfig[reservation.purpose];
 
   useEffect(() => {
     if (reservation.status !== "active") return;
 
-    const tick = () => {
-      const remaining = formatCountdown(reservation.expiresAt);
-      setCountdown(remaining);
-      if (remaining === "Expired") {
+    const checkExpiry = () => {
+      const now = Date.now();
+      const expiry = new Date(reservation.expiresAt).getTime();
+      if (now >= expiry) {
         expireReservation(reservation.id);
         toast.warning(`Đơn đặt chỗ tại ${reservation.locationName} đã hết hạn.`);
       }
     };
 
-    tick();
-    const interval = setInterval(tick, 1000);
+    checkExpiry();
+    const interval = setInterval(checkExpiry, 1000);
     return () => clearInterval(interval);
   }, [reservation, expireReservation]);
 
@@ -134,7 +133,7 @@ export default function ReservationItem({
             </div>
             <span className="text-slate-300">·</span>
             <span>
-              {reservation.timeSlot.startTime} – {reservation.timeSlot.endTime}
+              Giờ đến dự kiến: {reservation.timeSlot.startTime}
             </span>
           </div>
 
@@ -146,22 +145,17 @@ export default function ReservationItem({
             </div>
           )}
 
-          {/* Countdown (active only) */}
+          {/* Thông tin giữ chỗ (active only) */}
           {reservation.status === "active" && (
             <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mb-3">
-              <Timer className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
-              <div className="flex-1 flex justify-between items-center">
-                <div>
-                  <p className="text-xs text-amber-700 font-medium">
-                    Giữ chỗ đến <span className="font-bold">{formatTime(reservation.expiresAt)}</span>
-                  </p>
-                  <p className="text-[10px] text-amber-600/70">
-                    Tự động hủy nếu không check-in
-                  </p>
-                </div>
-                <div className="font-mono text-sm font-bold text-amber-600 bg-white/70 px-2.5 py-1 rounded border border-amber-100 shrink-0">
-                  {countdown || "15:00"}
-                </div>
+              <Timer className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs text-amber-700 font-medium">
+                  Giữ chỗ đến: <span className="font-bold">{formatDateTime(reservation.expiresAt)}</span>
+                </p>
+                <p className="text-[10px] text-amber-600/70">
+                  Vui lòng check-in trước thời gian trên để tránh bị hủy chỗ tự động
+                </p>
               </div>
             </div>
           )}

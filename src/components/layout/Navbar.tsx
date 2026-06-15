@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { BookMarked, MapPin, Menu, X } from "lucide-react";
+import { MapPin, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -52,13 +52,7 @@ export default function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/reservations"
-            className="ml-3 flex items-center gap-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-md shadow-violet-200"
-          >
-            <BookMarked className="w-3.5 h-3.5" />
-            Đặt chỗ ngay
-          </Link>
+
         </div>
 
         {/* Mobile Hamburger */}
